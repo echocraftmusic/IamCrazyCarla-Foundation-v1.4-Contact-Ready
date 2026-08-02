@@ -1,0 +1,7 @@
+[
+  {"id":"closeup","src":"images/gallery/carla-closeup.webp","alt":"Close portrait of Crazy Carla","caption":"Bold. Expressive. Unforgettable.","active":true},
+  {"id":"red","src":"images/gallery/carla-red.webp","alt":"Crazy Carla wearing red","caption":"Comedy with confidence.","active":true},
+  {"id":"pinstripe","src":"images/gallery/carla-pinstripe.webp","alt":"Crazy Carla in a pinstripe outfit","caption":"Commanding the room.","active":true},
+  {"id":"smile","src":"images/about/carla-smile.webp","alt":"Crazy Carla smiling outdoors","caption":"Warmth behind the wit.","active":true},
+  {"id":"family","src":"images/gallery/carla-family.webp","alt":"Crazy Carla with family","caption":"Life gives her the stories.","active":true}
+]
