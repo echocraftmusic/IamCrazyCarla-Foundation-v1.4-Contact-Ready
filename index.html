@@ -29,7 +29,7 @@
     <a class="brand" href="#top" aria-label="Crazy Carla home"><span>Crazy</span> Carla</a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav"><span></span><span></span><span></span><span class="sr-only">Menu</span></button>
     <nav id="site-nav" aria-label="Primary navigation">
-      <a href="#about">About</a><a href="#acting">Acting</a><a href="#watch">Watch</a><a href="#gallery">Gallery</a><a href="#experience">Experience</a><a href="#contact">Contact</a>
+      <a href="#about">About</a><a href="#acting">Acting</a><a href="#watch">Watch</a><a href="#gallery">Gallery</a><a href="#experience">Experience</a><a href="#reviews">Reviews</a><a href="#contact">Contact</a>
     </nav>
     <div class="nav-actions">
       <button class="theme-toggle" type="button" aria-label="Switch color theme"><span class="theme-icon">☾</span></button>
@@ -99,6 +99,38 @@
   </div>
 </section>
 
+
+<section class="section reviews" id="reviews">
+  <div class="section-heading"><p class="kicker">Real words. Real experiences.</p><h2>What people are <span>saying</span></h2></div>
+  <p class="reviews-intro">Read approved reviews from audiences, collaborators and event partners—or share your own experience with Crazy Carla.</p>
+  <div class="reviews-shell">
+    <div class="reviews-display">
+      <div class="reviews-track" id="reviews-track" aria-live="polite"><div class="reviews-empty">Approved reviews will appear here.</div></div>
+      <div class="review-navigation" aria-label="Review carousel controls">
+        <button class="review-nav-button" id="reviews-prev" type="button" aria-label="Show previous review">←</button>
+        <p class="review-scroll-note">Swipe or use the arrows to read more reviews.</p>
+        <button class="review-nav-button" id="reviews-next" type="button" aria-label="Show next review">→</button>
+      </div>
+    </div>
+    <aside class="review-form-card reveal" aria-labelledby="review-form-title">
+      <p class="mini-label">Share your experience</p>
+      <h3 id="review-form-title">Leave Carla a Review</h3>
+      <p>This form is separate from booking inquiries. Reviews are privately reviewed before appearing on the website.</p>
+      <form class="review-form" id="review-form">
+        <input class="form-honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <label>Your name<input name="reviewer_name" autocomplete="name" maxlength="80" required></label>
+        <label>Email <span class="sr-only">kept private</span><input type="email" name="reviewer_email" autocomplete="email" maxlength="160" required><small>Email stays private.</small></label>
+        <label>Experience type<select name="category" required><option value="">Choose one</option><option>Comedy Show</option><option>Acting Collaboration</option><option>Podcast or Interview</option><option>Event Hosting</option><option>Audience or Viewer</option><option>Other Experience</option></select></label>
+        <fieldset><legend>Rating</legend><div class="rating-picker" aria-label="Choose a star rating"><input type="radio" id="star5" name="rating" value="5" required><label for="star5" title="5 stars">★</label><input type="radio" id="star4" name="rating" value="4"><label for="star4" title="4 stars">★</label><input type="radio" id="star3" name="rating" value="3"><label for="star3" title="3 stars">★</label><input type="radio" id="star2" name="rating" value="2"><label for="star2" title="2 stars">★</label><input type="radio" id="star1" name="rating" value="1"><label for="star1" title="1 star">★</label></div></fieldset>
+        <label>Your review<textarea name="review_text" maxlength="700" required placeholder="Tell others about your experience with Crazy Carla..."></textarea></label>
+        <label class="review-consent"><input type="checkbox" name="consent" required><span>I give permission for this review and my displayed name to appear on IamCrazyCarla.com if approved.</span></label>
+        <button class="btn btn-primary" type="submit">Submit Review</button>
+        <p class="review-status" id="review-status" role="status" aria-live="polite"></p>
+      </form>
+    </aside>
+  </div>
+</section>
+
 <section class="section contact" id="contact">
   <div class="contact-copy"><p class="kicker">Bookings & collaborations</p><h2>Let’s make the next story <span>unforgettable.</span></h2><p>For comedy bookings, acting opportunities, podcast appearances, interviews, event hosting and collaborations.</p><div class="contact-details"><a href="mailto:aahfro10@gmail.com">aahfro10@gmail.com</a><span>Winston-Salem, North Carolina</span></div><div class="social-row" aria-label="Crazy Carla social media">
 <a class="social-icon youtube" href="https://www.youtube.com/@10aahfro" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.3 3.6-6.3 3.6Z"/></svg><span class="sr-only">YouTube</span></a>
@@ -132,6 +164,9 @@
   ]
 }
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<script src="js/supabase-config.js" defer></script>
+<script src="js/reviews.js" defer></script>
 <script src="js/main.js" defer></script>
 </body>
 </html>
