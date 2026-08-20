@@ -1,8 +1,24 @@
 {
   "channel_handle": "@10aahfro",
   "channel_id": "UC2wmlDZwxw4-RxtsyxSKHpA",
-  "updated_at": "2026-08-13T00:58:47.097103+00:00",
+  "updated_at": "2026-08-20T00:34:15.183306+00:00",
   "videos": [
+    {
+      "id": "IdC4gBbp2bI",
+      "title": "Guess who is opening for Vickie Winans!!! #Comedienne #comedy",
+      "published": "2026-08-18T22:32:06+00:00",
+      "description": "",
+      "url": "https://www.youtube.com/watch?v=IdC4gBbp2bI",
+      "thumbnail": "https://i.ytimg.com/vi/IdC4gBbp2bI/hqdefault.jpg"
+    },
+    {
+      "id": "xffEExqHivg",
+      "title": "\ud83d\ude4f\ud83c\udffe#WuuundaAndTrifus #SavedButStillGhetto #MondayMischief #BlackComedy #ChurchComedy #FunnyCousins",
+      "published": "2026-08-18T18:55:11+00:00",
+      "description": "",
+      "url": "https://www.youtube.com/watch?v=xffEExqHivg",
+      "thumbnail": "https://i.ytimg.com/vi/xffEExqHivg/hqdefault.jpg"
+    },
     {
       "id": "jocUPz_ULXY",
       "title": "3 DAYS UNTIL DIVA DAY!  #CelebrateYourself #BirthdayCountdown #DivaDay #LeoEnergy#affirmations",
@@ -34,22 +50,6 @@
       "description": "A whole new season of *Crazy Carla\u2019s Concoctions* is here!\n\nJoin comedian and actress *Carla, aka Crazy Carla**, every **Thursday at 8:00 PM on YouTube* for hilarious conversations, unpredictable moments, plenty of laughs, and a brand-new special guest every week.\n\nYou never know what Carla is going",
       "url": "https://www.youtube.com/watch?v=ZXzDJM1g4HA",
       "thumbnail": "https://i.ytimg.com/vi/ZXzDJM1g4HA/hqdefault.jpg"
-    },
-    {
-      "id": "euNnqTWGVLw",
-      "title": "Winning Wednesday #affirmations #joy #selflove",
-      "published": "2026-08-06T14:44:02+00:00",
-      "description": "",
-      "url": "https://www.youtube.com/watch?v=euNnqTWGVLw",
-      "thumbnail": "https://i.ytimg.com/vi/euNnqTWGVLw/hqdefault.jpg"
-    },
-    {
-      "id": "Gf6Mt51FBaA",
-      "title": "Crazy Carla's Concoctions Podcast Episode 116. Thursday,  8pm, EST #podcast #rawvegan #gardening",
-      "published": "2026-08-05T12:54:08+00:00",
-      "description": "",
-      "url": "https://www.youtube.com/watch?v=Gf6Mt51FBaA",
-      "thumbnail": "https://i.ytimg.com/vi/Gf6Mt51FBaA/hqdefault.jpg"
     }
   ]
 }
