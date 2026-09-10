@@ -1,271 +1,217 @@
 #!/usr/bin/env python3
-"""
-Crazy Carla YouTube updater.
+"""Update Crazy Carla's website with her four newest PUBLIC YouTube uploads.
 
-This version is deliberately strict:
-- It reads Carla's public Videos, Shorts, and Live tabs with yt-dlp.
-- It merges and sorts all candidates by the best available upload timestamp.
-- It writes exactly the newest 4 public uploads to data/youtube-videos.json.
-- It does NOT silently keep stale data when YouTube cannot be read.
-  A failed refresh must fail the GitHub Action so the problem is visible.
-- It records last_checked_at every successful run so we can prove the updater ran.
+This version uses the official YouTube Data API v3 instead of scraping YouTube.
+That avoids GitHub Actions being blocked by YouTube's "confirm you're not a bot"
+challenge.
 
-No YouTube login or API key is required.
+Required environment variable:
+    YOUTUBE_API_KEY
+
+The key only needs read access to the public YouTube Data API. No Carla login,
+OAuth token, cookies, or browser session is required.
 """
 
 from __future__ import annotations
 
 import json
+import os
 import sys
-import time
+import urllib.error
+import urllib.parse
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import yt_dlp
-
 HANDLE = "10aahfro"
-CHANNEL_URL = f"https://www.youtube.com/@{HANDLE}"
 VIDEO_LIMIT = 4
-CANDIDATES_PER_TAB = 15
+LOOKAHEAD = 15
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "youtube-videos.json"
-
-TAB_URLS = [
-    f"{CHANNEL_URL}/videos",
-    f"{CHANNEL_URL}/shorts",
-    f"{CHANNEL_URL}/streams",
-]
-
-BASE_OPTS: dict[str, Any] = {
-    "quiet": True,
-    "no_warnings": True,
-    "skip_download": True,
-    "ignoreerrors": True,
-    "socket_timeout": 30,
-    "retries": 5,
-    "extractor_retries": 5,
-    "geo_bypass": True,
-    "http_headers": {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/131.0.0.0 Safari/537.36"
-        ),
-        "Accept-Language": "en-US,en;q=0.9",
-    },
-}
+API_BASE = "https://www.googleapis.com/youtube/v3"
 
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def ydl_extract(url: str, *, flat: bool) -> dict[str, Any] | None:
-    opts = dict(BASE_OPTS)
-    opts["extract_flat"] = "in_playlist" if flat else False
-    if flat:
-        opts["playlistend"] = CANDIDATES_PER_TAB
-
-    last_error: Exception | None = None
-
-    for attempt in range(3):
-        try:
-            with yt_dlp.YoutubeDL(opts) as ydl:
-                info = ydl.extract_info(url, download=False)
-            return info if isinstance(info, dict) else None
-        except Exception as exc:
-            last_error = exc
-            if attempt < 2:
-                time.sleep(2 ** attempt)
-
-    if last_error:
-        print(f"ERROR reading {url}: {last_error}", file=sys.stderr)
-    return None
-
-
-def parse_timestamp(info: dict[str, Any]) -> int | None:
-    for key in (
-        "timestamp",
-        "release_timestamp",
-        "modified_timestamp",
-    ):
-        value = info.get(key)
-        if isinstance(value, (int, float)):
-            return int(value)
-
-    for key in ("upload_date", "release_date"):
-        value = info.get(key)
-        if isinstance(value, str) and len(value) == 8 and value.isdigit():
-            try:
-                dt = datetime.strptime(value, "%Y%m%d").replace(
-                    hour=12,
-                    tzinfo=timezone.utc,
-                )
-                return int(dt.timestamp())
-            except ValueError:
-                pass
-
-    return None
-
-
-def normalize_entry(entry: dict[str, Any]) -> dict[str, Any] | None:
-    video_id = entry.get("id")
-    if not isinstance(video_id, str) or not video_id:
-        return None
-
-    return {
-        "id": video_id,
-        "title": entry.get("title") or "Crazy Carla video",
-        "description": entry.get("description") or "",
-        "timestamp": parse_timestamp(entry),
-        "channel_id": entry.get("channel_id") or "",
-    }
-
-
-def collect_candidates() -> dict[str, dict[str, Any]]:
-    candidates: dict[str, dict[str, Any]] = {}
-    successful_tabs = 0
-
-    for tab_url in TAB_URLS:
-        print(f"Reading {tab_url}")
-        info = ydl_extract(tab_url, flat=True)
-        if not info:
-            continue
-
-        entries = info.get("entries")
-        if not isinstance(entries, list):
-            continue
-
-        usable = 0
-        for raw in entries[:CANDIDATES_PER_TAB]:
-            if not isinstance(raw, dict):
-                continue
-
-            item = normalize_entry(raw)
-            if not item:
-                continue
-
-            usable += 1
-            old = candidates.get(item["id"])
-            if old is None:
-                candidates[item["id"]] = item
-            elif not old.get("timestamp") and item.get("timestamp"):
-                candidates[item["id"]] = item
-
-        if usable:
-            successful_tabs += 1
-            print(f"  Found {usable} candidate(s).")
-
-    if successful_tabs == 0 or not candidates:
+def api_get(resource: str, **params: str | int) -> dict[str, Any]:
+    key = os.environ.get("YOUTUBE_API_KEY", "").strip()
+    if not key:
         raise RuntimeError(
-            "Could not read any usable uploads from Carla's Videos, Shorts, or Live tabs."
+            "Missing YOUTUBE_API_KEY. Add it as a GitHub Actions repository "
+            "secret before running this workflow."
         )
 
-    print(f"Collected {len(candidates)} unique candidate(s).")
-    return candidates
+    query = dict(params)
+    query["key"] = key
+    url = f"{API_BASE}/{resource}?{urllib.parse.urlencode(query)}"
 
-
-def enrich(candidate: dict[str, Any]) -> dict[str, Any] | None:
-    video_id = candidate["id"]
-    info = ydl_extract(f"https://www.youtube.com/watch?v={video_id}", flat=False)
-
-    if not info:
-        # Keep a flat entry only if it already has a reliable timestamp.
-        return candidate if candidate.get("timestamp") else None
-
-    timestamp = parse_timestamp(info) or candidate.get("timestamp")
-    if not timestamp:
-        return None
-
-    return {
-        "id": video_id,
-        "title": info.get("title") or candidate.get("title") or "Crazy Carla video",
-        "description": info.get("description") or candidate.get("description") or "",
-        "timestamp": int(timestamp),
-        "channel_id": info.get("channel_id") or candidate.get("channel_id") or "",
-    }
-
-
-def make_video(item: dict[str, Any]) -> dict[str, str]:
-    video_id = str(item["id"])
-    timestamp = int(item["timestamp"])
-
-    return {
-        "id": video_id,
-        "title": str(item.get("title") or "Crazy Carla video"),
-        "published": datetime.fromtimestamp(
-            timestamp,
-            tz=timezone.utc,
-        ).isoformat(),
-        "description": str(item.get("description") or "")[:300],
-        "url": f"https://www.youtube.com/watch?v={video_id}",
-        "thumbnail": f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg",
-    }
-
-
-def get_newest_four() -> tuple[list[dict[str, str]], str]:
-    candidates = collect_candidates()
-    enriched: list[dict[str, Any]] = []
-
-    # Enrich every candidate. This costs a few more requests, but avoids the
-    # exact problem the old updater had: channel-page metadata can be incomplete.
-    for index, candidate in enumerate(candidates.values(), start=1):
-        print(
-            f"Resolving {index}/{len(candidates)}: "
-            f"{candidate['id']} - {candidate.get('title', '')[:70]}"
-        )
-        full = enrich(candidate)
-        if full and full.get("timestamp"):
-            enriched.append(full)
-
-    if len(enriched) < VIDEO_LIMIT:
-        raise RuntimeError(
-            f"Only {len(enriched)} uploads had usable dates; need {VIDEO_LIMIT}."
-        )
-
-    enriched.sort(key=lambda item: int(item["timestamp"]), reverse=True)
-    selected = enriched[:VIDEO_LIMIT]
-
-    channel_id = next(
-        (
-            str(item.get("channel_id"))
-            for item in selected
-            if isinstance(item.get("channel_id"), str) and item.get("channel_id")
-        ),
-        "",
+    request = urllib.request.Request(
+        url,
+        headers={
+            "Accept": "application/json",
+            "User-Agent": "CrazyCarlaWebsite/1.0",
+        },
     )
 
-    return [make_video(item) for item in selected], channel_id
-
-
-def read_existing() -> dict[str, Any]:
-    if not OUT.exists():
-        return {}
     try:
-        data = json.loads(OUT.read_text(encoding="utf-8"))
-        return data if isinstance(data, dict) else {}
-    except (OSError, json.JSONDecodeError):
-        return {}
+        with urllib.request.urlopen(request, timeout=30) as response:
+            return json.load(response)
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        try:
+            detail = json.loads(body)
+            message = (
+                detail.get("error", {})
+                .get("message", body)
+            )
+        except json.JSONDecodeError:
+            message = body or str(exc)
+        raise RuntimeError(
+            f"YouTube Data API returned HTTP {exc.code}: {message}"
+        ) from exc
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"Could not reach YouTube Data API: {exc}") from exc
+
+
+def get_channel() -> tuple[str, str]:
+    data = api_get(
+        "channels",
+        part="id,contentDetails",
+        forHandle=f"@{HANDLE}",
+        maxResults=1,
+    )
+
+    items = data.get("items", [])
+    if not items:
+        raise RuntimeError(
+            f"YouTube could not find the channel for @{HANDLE}."
+        )
+
+    channel = items[0]
+    channel_id = channel.get("id", "")
+    uploads_id = (
+        channel.get("contentDetails", {})
+        .get("relatedPlaylists", {})
+        .get("uploads", "")
+    )
+
+    if not channel_id or not uploads_id:
+        raise RuntimeError(
+            "YouTube returned the channel but not its uploads playlist."
+        )
+
+    return channel_id, uploads_id
+
+
+def get_recent_upload_ids(uploads_id: str) -> list[str]:
+    data = api_get(
+        "playlistItems",
+        part="snippet,contentDetails",
+        playlistId=uploads_id,
+        maxResults=LOOKAHEAD,
+    )
+
+    ids: list[str] = []
+    seen: set[str] = set()
+
+    for item in data.get("items", []):
+        video_id = (
+            item.get("contentDetails", {}).get("videoId")
+            or item.get("snippet", {})
+            .get("resourceId", {})
+            .get("videoId")
+        )
+
+        if video_id and video_id not in seen:
+            seen.add(video_id)
+            ids.append(video_id)
+
+    if not ids:
+        raise RuntimeError("The uploads playlist did not return any videos.")
+
+    return ids
+
+
+def get_video_details(video_ids: list[str]) -> list[dict[str, str]]:
+    data = api_get(
+        "videos",
+        part="snippet,status",
+        id=",".join(video_ids[:50]),
+        maxResults=min(len(video_ids), 50),
+    )
+
+    videos: list[dict[str, str]] = []
+
+    for item in data.get("items", []):
+        video_id = item.get("id", "")
+        snippet = item.get("snippet", {})
+        status = item.get("status", {})
+
+        # Do not feature private/unlisted items or scheduled future streams.
+        if status.get("privacyStatus") != "public":
+            continue
+        if snippet.get("liveBroadcastContent") == "upcoming":
+            continue
+
+        published = snippet.get("publishedAt", "")
+        if not video_id or not published:
+            continue
+
+        title = snippet.get("title") or "Crazy Carla video"
+        description = snippet.get("description") or ""
+
+        thumbs = snippet.get("thumbnails", {})
+        thumbnail = ""
+        for size in ("maxres", "standard", "high", "medium", "default"):
+            candidate = thumbs.get(size, {}).get("url")
+            if candidate:
+                thumbnail = candidate
+                break
+        if not thumbnail:
+            thumbnail = f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg"
+
+        videos.append(
+            {
+                "id": video_id,
+                "title": title,
+                "published": published,
+                "description": description[:300],
+                "url": f"https://www.youtube.com/watch?v={video_id}",
+                "thumbnail": thumbnail,
+            }
+        )
+
+    videos.sort(
+        key=lambda video: datetime.fromisoformat(
+            video["published"].replace("Z", "+00:00")
+        ),
+        reverse=True,
+    )
+
+    if len(videos) < VIDEO_LIMIT:
+        raise RuntimeError(
+            f"YouTube returned only {len(videos)} usable public uploads; "
+            f"{VIDEO_LIMIT} are required."
+        )
+
+    return videos[:VIDEO_LIMIT]
 
 
 def main() -> int:
-    old = read_existing()
-    old_ids = [
-        item.get("id")
-        for item in old.get("videos", [])
-        if isinstance(item, dict)
-    ][:VIDEO_LIMIT]
+    channel_id, uploads_id = get_channel()
+    recent_ids = get_recent_upload_ids(uploads_id)
+    videos = get_video_details(recent_ids)
 
-    videos, channel_id = get_newest_four()
-    new_ids = [item["id"] for item in videos]
-
+    checked_at = now_iso()
     payload = {
         "channel_handle": f"@{HANDLE}",
-        "channel_id": channel_id or old.get("channel_id", ""),
-        "last_checked_at": now_iso(),
-        "updated_at": now_iso(),
+        "channel_id": channel_id,
+        "last_checked_at": checked_at,
+        "updated_at": checked_at,
         "videos": videos,
     }
 
@@ -275,19 +221,15 @@ def main() -> int:
         encoding="utf-8",
     )
 
-    print("")
-    print("Newest 4 uploads selected:")
-    for number, video in enumerate(videos, start=1):
-        print(f"  {number}. {video['published']} | {video['id']} | {video['title']}")
-
-    if old_ids == new_ids:
-        print("")
-        print("The selected video IDs are unchanged, but the successful check timestamp was refreshed.")
-    else:
-        print("")
-        print(f"Changed IDs: {old_ids} -> {new_ids}")
-
-    print(f"Wrote: {OUT}")
+    print(f"Channel: @{HANDLE} ({channel_id})")
+    print(f"Uploads playlist: {uploads_id}")
+    print("Newest four public uploads:")
+    for index, video in enumerate(videos, start=1):
+        print(
+            f"  {index}. {video['published']} | "
+            f"{video['id']} | {video['title']}"
+        )
+    print(f"Wrote {OUT}")
     return 0
 
 
@@ -295,10 +237,5 @@ if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except Exception as exc:
-        print("", file=sys.stderr)
-        print(f"YOUTUBE REFRESH FAILED: {exc}", file=sys.stderr)
-        print(
-            "The existing JSON was NOT silently accepted as current.",
-            file=sys.stderr,
-        )
-        raise
+        print(f"YouTube update failed: {exc}", file=sys.stderr)
+        raise SystemExit(1)
