@@ -2,7 +2,8 @@ name: Update Crazy Carla YouTube videos
 
 on:
   schedule:
-    # Wednesday 8:00 PM Eastern while daylight saving time is active.
+    # Wednesday 8:00 PM Eastern during daylight saving time.
+    # GitHub Actions cron uses UTC.
     - cron: '0 0 * * 4'
   workflow_dispatch:
 
@@ -12,7 +13,7 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
 
     steps:
       - name: Check out the live branch
@@ -26,56 +27,59 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install current YouTube reader
+      - name: Confirm YouTube API key exists
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: |
-          python -m pip install --disable-pip-version-check --upgrade pip
-          python -m pip install --disable-pip-version-check --upgrade yt-dlp
-          python -m yt_dlp --version
+          if [ -z "$YOUTUBE_API_KEY" ]; then
+            echo "::error::Missing repository secret YOUTUBE_API_KEY"
+            echo "Add it under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          echo "YouTube API key secret is present."
 
-      - name: Show JSON state before refresh
-        run: |
-          echo "Branch: $(git branch --show-current)"
-          echo "Commit: $(git rev-parse HEAD)"
-          echo "Current file:"
-          cat data/youtube-videos.json || true
-
-      - name: Refresh Carla's newest four uploads
+      - name: Refresh Carla's newest four YouTube uploads
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: python scripts/update_youtube.py
 
-      - name: Verify updater really wrote fresh data
+      - name: Verify fresh JSON
         run: |
           python - <<'PY'
           import json
           from datetime import datetime, timezone
           from pathlib import Path
 
-          p = Path("data/youtube-videos.json")
-          if not p.exists():
-              raise SystemExit("ERROR: youtube-videos.json was not created.")
-
-          data = json.loads(p.read_text(encoding="utf-8"))
+          path = Path("data/youtube-videos.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
           videos = data.get("videos", [])
 
           if len(videos) != 4:
-              raise SystemExit(f"ERROR: expected exactly 4 videos, found {len(videos)}.")
-
-          checked = data.get("last_checked_at") or data.get("updated_at")
-          if not checked:
-              raise SystemExit("ERROR: no successful-check timestamp was written.")
-
-          dt = datetime.fromisoformat(checked.replace("Z", "+00:00"))
-          age = (datetime.now(timezone.utc) - dt).total_seconds()
-          if age > 600:
               raise SystemExit(
-                  f"ERROR: updater left stale data. Check timestamp is {age:.0f}s old."
+                  f"Expected exactly 4 videos, found {len(videos)}."
               )
 
-          print("Verified fresh YouTube JSON:")
-          for i, v in enumerate(videos, 1):
-              print(f"{i}. {v.get('published')} | {v.get('id')} | {v.get('title')}")
+          checked = data.get("last_checked_at")
+          if not checked:
+              raise SystemExit("Missing last_checked_at.")
+
+          stamp = datetime.fromisoformat(checked.replace("Z", "+00:00"))
+          age = (datetime.now(timezone.utc) - stamp).total_seconds()
+
+          if age < -60 or age > 600:
+              raise SystemExit(
+                  f"JSON is not fresh; last_checked_at is {checked}."
+              )
+
+          print("Verified current JSON:")
+          for number, video in enumerate(videos, 1):
+              print(
+                  f"{number}. {video.get('published')} | "
+                  f"{video.get('id')} | {video.get('title')}"
+              )
           PY
 
-      - name: Commit and push refreshed data
+      - name: Commit updated video data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -83,15 +87,14 @@ jobs:
           git add data/youtube-videos.json
 
           if git diff --cached --quiet; then
-            echo "ERROR: updater ran but produced no repository change."
-            exit 1
+            echo "No file change to commit."
+            exit 0
           fi
 
-          git commit -m "Refresh Crazy Carla YouTube feed"
+          git commit -m "Update Crazy Carla YouTube videos"
           git push origin HEAD:${{ github.event.repository.default_branch }}
 
-      - name: Confirm pushed JSON exists in the branch
+      - name: Confirm remote branch contains the update
         run: |
           git fetch origin ${{ github.event.repository.default_branch }}
-          echo "Remote branch now contains:"
           git show origin/${{ github.event.repository.default_branch }}:data/youtube-videos.json
