@@ -147,3 +147,12 @@ footer small{text-align:right}
 .bulletin-copy em{color:var(--text)}
 @media(max-width:900px){.bulletin-grid{grid-template-columns:1fr}.bulletin-poster img{height:min(72vh,700px)}}
 @media(max-width:720px){.bulletin-intro{text-align:left;margin-top:-20px}.bulletin-grid{gap:18px}.bulletin-poster{min-height:0;padding:12px}.bulletin-poster img{height:auto;max-height:72vh}.bulletin-copy{padding:18px 18px 21px}}
+
+
+/* Bulletin flyer lightbox */
+.bulletin-poster{border:0;width:100%;color:inherit;cursor:zoom-in;font:inherit}
+.bulletin-lightbox{width:min(94vw,1200px);height:min(94vh,1100px);padding:54px 18px 18px;border:1px solid var(--line);border-radius:18px;background:#080706;box-shadow:0 30px 90px rgba(0,0,0,.72);overflow:auto}
+.bulletin-lightbox::backdrop{background:rgba(0,0,0,.88);backdrop-filter:blur(6px)}
+.bulletin-lightbox img{width:100%;height:auto;max-height:none;object-fit:contain;margin:auto}
+.bulletin-lightbox-close{position:fixed;right:max(4vw,24px);top:max(3vh,18px);z-index:2;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:#171412;color:#fff;font:400 30px/1 "DM Sans",sans-serif;cursor:pointer}
+@media(max-width:720px){.bulletin-lightbox{width:96vw;height:94vh;padding:52px 10px 12px}.bulletin-lightbox-close{right:18px;top:16px}}
