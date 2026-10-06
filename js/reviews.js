@@ -26,7 +26,12 @@
 
   const makeId = () => {
     if (window.crypto?.randomUUID) return window.crypto.randomUUID();
-    return `review-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    // UUID v4-compatible fallback for browsers without crypto.randomUUID().
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, char => {
+      const value = Math.random() * 16 | 0;
+      const nibble = char === 'x' ? value : (value & 0x3 | 0x8);
+      return nibble.toString(16);
+    });
   };
 
   const readQueue = () => {
