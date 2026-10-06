@@ -17,6 +17,7 @@
   // 4) Quietly retry queued local copies on future visits / when connectivity returns.
   const REVIEW_QUEUE_KEY = 'carla_review_recovery_queue_v1';
   const FALLBACK_ENDPOINT = 'https://formsubmit.co/ajax/aahfro10@gmail.com';
+  const FORCE_RECOVERY_TEST = new URLSearchParams(window.location.search).get('review-test') === 'fallback';
 
   const escapeHTML = value => String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
   const displayName = value => {
@@ -70,6 +71,7 @@
   const removeQueuedReview = id => writeQueue(readQueue().filter(entry => entry.id !== id));
 
   async function saveToSupabase(item) {
+    if (FORCE_RECOVERY_TEST) throw new Error('Forced recovery test mode.');
     if (!client) throw new Error('Supabase client unavailable.');
     const payload = {
       id: item.id,
