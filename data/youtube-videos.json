@@ -1,9 +1,25 @@
 {
   "channel_handle": "@10aahfro",
   "channel_id": "UC2wmlDZwxw4-RxtsyxSKHpA",
-  "last_checked_at": "2026-10-01T02:53:09.233492+00:00",
-  "updated_at": "2026-10-01T02:53:09.233492+00:00",
+  "last_checked_at": "2026-10-08T03:21:58.738993+00:00",
+  "updated_at": "2026-10-08T03:21:58.738993+00:00",
   "videos": [
+    {
+      "id": "dK51iateAcA",
+      "title": "Comic Book Shenanigans with Trifus and Wuuunda",
+      "published": "2026-10-02T07:11:31Z",
+      "description": "",
+      "url": "https://www.youtube.com/watch?v=dK51iateAcA",
+      "thumbnail": "https://i.ytimg.com/vi/dK51iateAcA/maxresdefault.jpg"
+    },
+    {
+      "id": "jeF3aRBzBjw",
+      "title": "Aging Gracefully after beating terminal cancer.",
+      "published": "2026-10-02T07:03:20Z",
+      "description": "",
+      "url": "https://www.youtube.com/watch?v=jeF3aRBzBjw",
+      "thumbnail": "https://i.ytimg.com/vi/jeF3aRBzBjw/maxresdefault.jpg"
+    },
     {
       "id": "Gh4Ua1Cr4wE",
       "title": "Black Comic Book Cousins Trifus and Wuuunda fight over the THERMOSTAFF",
@@ -19,22 +35,6 @@
       "description": "",
       "url": "https://www.youtube.com/watch?v=amDrRd9dg5o",
       "thumbnail": "https://i.ytimg.com/vi/amDrRd9dg5o/maxresdefault.jpg"
-    },
-    {
-      "id": "ngvX75UtVsE",
-      "title": "Black Comic Book Cousins Trifus and Wuuunda argue about his dating app profile.",
-      "published": "2026-09-29T19:05:02Z",
-      "description": "",
-      "url": "https://www.youtube.com/watch?v=ngvX75UtVsE",
-      "thumbnail": "https://i.ytimg.com/vi/ngvX75UtVsE/maxresdefault.jpg"
-    },
-    {
-      "id": "EZMONdvIvso",
-      "title": "IT'S A DIFFERENT WORLD!METHOD MAN!! LOC'D PIERRE !!!",
-      "published": "2026-09-28T04:21:01Z",
-      "description": "",
-      "url": "https://www.youtube.com/watch?v=EZMONdvIvso",
-      "thumbnail": "https://i.ytimg.com/vi/EZMONdvIvso/maxresdefault.jpg"
     }
   ]
 }
