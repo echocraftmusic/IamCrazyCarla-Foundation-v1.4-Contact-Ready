@@ -176,16 +176,72 @@
   window.addEventListener('resize', updateNavigation);
   window.addEventListener('online', retryRecoveryQueue);
 
+  async function fetchApprovedReviewsDirect() {
+    if (!configured) throw new Error('Supabase configuration unavailable.');
+    const endpoint = new URL('/rest/v1/reviews', config.url);
+    endpoint.searchParams.set('select', 'id,reviewer_name,rating,category,review_text,featured,approved_at');
+    endpoint.searchParams.set('status', 'eq.approved');
+    endpoint.searchParams.set('order', 'featured.desc,approved_at.desc');
+    endpoint.searchParams.set('limit', '12');
+
+    const response = await fetch(endpoint.toString(), {
+      headers: {
+        apikey: config.anonKey,
+        Accept: 'application/json'
+      },
+      cache: 'no-store'
+    });
+
+    if (!response.ok) throw new Error(`Review REST request failed with HTTP ${response.status}`);
+    return response.json();
+  }
+
   async function loadReviews() {
-    if (!client) {
-      render([
-        {reviewer_name:'Sample Reviewer',rating:5,category:'Audience or Viewer',review_text:'This is a preview card. Approved reviews submitted through Carla’s review system will appear here automatically.',featured:true}
-      ]);
-      return;
+    let lastError = null;
+
+    // First try the normal Supabase client.
+    if (client) {
+      try {
+        const { data, error } = await client
+          .from('reviews')
+          .select('id,reviewer_name,rating,category,review_text,featured,approved_at')
+          .eq('status','approved')
+          .order('featured',{ascending:false})
+          .order('approved_at',{ascending:false})
+          .limit(12);
+
+        if (error) throw error;
+        render(data || []);
+        return;
+      } catch (error) {
+        lastError = error;
+        console.warn('Supabase SDK review load failed; trying direct REST fallback.', error);
+      }
     }
-    const { data, error } = await client.from('reviews').select('id,reviewer_name,rating,category,review_text,featured,approved_at').eq('status','approved').order('featured',{ascending:false}).order('approved_at',{ascending:false}).limit(12);
-    if (error) { console.error(error); render([]); return; }
-    render(data || []);
+
+    // Mobile browsers sometimes fail to initialize the third-party SDK/CDN even when
+    // the Supabase REST API itself is reachable. Read approved public reviews directly
+    // so display does not depend on the SDK being available.
+    try {
+      const data = await fetchApprovedReviewsDirect();
+      render(Array.isArray(data) ? data : []);
+      return;
+    } catch (error) {
+      lastError = error;
+      console.error('Direct review load failed.', error);
+    }
+
+    // Do not show fake/sample reviews in production. If both paths fail, show the
+    // neutral empty state and retry once shortly in case the mobile connection was transient.
+    render([]);
+    setTimeout(async () => {
+      try {
+        const data = await fetchApprovedReviewsDirect();
+        if (Array.isArray(data)) render(data);
+      } catch (retryError) {
+        console.warn('Review retry still unavailable.', retryError || lastError);
+      }
+    }, 2500);
   }
 
   form.addEventListener('submit', async event => {
