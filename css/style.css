@@ -46,7 +46,7 @@ footer small{text-align:right}
 .review-card:hover{transform:translateY(-5px);border-color:color-mix(in srgb,var(--accent) 50%,var(--line));box-shadow:0 24px 55px rgba(0,0,0,.18)}
 .review-card.featured{grid-column:span 2;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 11%,var(--card)),var(--card))}
 .review-stars{letter-spacing:.13em;color:var(--gold);font-size:1rem;margin-bottom:1rem;position:relative;z-index:1}
-.review-card blockquote{margin:0 0 1.35rem;font-family:"Italiana",serif;font-size:clamp(1.08rem,1.45vw,1.32rem);line-height:1.52;overflow-wrap:anywhere;position:relative;z-index:1}
+.review-card blockquote{margin:0 0 1.35rem;font-family:"DM Sans",sans-serif;font-size:clamp(1.08rem,1.34vw,1.22rem);font-weight:500;line-height:1.68;letter-spacing:.002em;color:var(--text);overflow-wrap:anywhere;position:relative;z-index:1}
 .review-meta{display:flex;flex-wrap:wrap;gap:.45rem .7rem;align-items:center;color:var(--muted);font-size:.86rem;margin-top:auto;padding-top:.25rem}
 .review-meta strong{color:var(--text)}
 .review-category{padding:.25rem .58rem;border:1px solid var(--line);border-radius:999px}
@@ -170,3 +170,15 @@ footer small{text-align:right}
 .bulletin-lightbox-close{position:absolute;right:14px;top:12px;z-index:2;width:44px;height:44px;display:grid;place-items:center;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:#171412;color:#fff;font:400 30px/1 "DM Sans",sans-serif;cursor:pointer}
 @media(max-width:720px){.bulletin-lightbox{width:98vw;height:95vh;padding:54px 10px 10px;border-radius:12px}.bulletin-lightbox-close{right:10px;top:8px}}
 
+
+/* Review readability upgrade — preserve premium card styling while prioritizing long-form legibility */
+.review-card blockquote{
+  text-wrap:pretty;
+}
+@media(max-width:680px){
+  .review-card blockquote{
+    font-size:1.08rem;
+    line-height:1.72;
+    font-weight:500;
+  }
+}
