@@ -1,0 +1,38 @@
+name: Review Public Access Diagnostic
+on:
+  push:
+    paths:
+      - '.github/workflows/review-public-diagnostic.yml'
+  workflow_dispatch:
+
+jobs:
+  test-public-review-access:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query approved reviews as anonymous public client
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL='https://bzsocywrhkpmyxngjtzt.supabase.co/rest/v1/reviews?select=id&status=eq.approved&limit=12'
+          KEY='sb_publishable_5P5mnA85-e3iiaaFn45iUA_-pvO9Gb-'
+          HTTP=$(curl -sS -o /tmp/reviews.json -w '%{http_code}' \
+            -H "apikey: $KEY" \
+            -H 'Accept: application/json' \
+            "$URL")
+          echo "HTTP_STATUS=$HTTP"
+          python3 - <<'PY'
+          import json
+          p='/tmp/reviews.json'
+          try:
+              data=json.load(open(p))
+          except Exception as e:
+              print('JSON_PARSE_ERROR='+str(e))
+              raise
+          if isinstance(data, list):
+              print('PUBLIC_APPROVED_ROW_COUNT='+str(len(data)))
+          else:
+              print('RESPONSE_TYPE='+type(data).__name__)
+              print('ERROR_CODE='+str(data.get('code','')))
+              print('ERROR_MESSAGE='+str(data.get('message','')))
+          PY
+          test "$HTTP" = "200"
