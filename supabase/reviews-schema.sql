@@ -29,7 +29,11 @@ with check (status='pending' and featured=false and approved_at is null and cons
 
 create policy "Public can read approved reviews" on public.reviews
 for select to anon, authenticated
-using (status='approved' or exists(select 1 from public.admin_users a where a.user_id=auth.uid()));
+using (status='approved');
+
+create policy "Admins can read all reviews" on public.reviews
+for select to authenticated
+using (exists(select 1 from public.admin_users a where a.user_id=auth.uid()));
 
 create policy "Admins can update reviews" on public.reviews
 for update to authenticated
