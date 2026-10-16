@@ -182,3 +182,6 @@ footer small{text-align:right}
     font-weight:500;
   }
 }
+
+.review-form button[type="submit"]:disabled{opacity:.42;cursor:not-allowed;filter:grayscale(.55);box-shadow:none;transform:none}
+.review-form button[type="submit"]:disabled:hover{transform:none}
