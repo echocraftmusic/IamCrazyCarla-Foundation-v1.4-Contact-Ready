@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Review Administration | Crazy Carla</title>
+<style>
+:root{color-scheme:dark;--bg:#0c0a09;--panel:#1c1714;--gold:#d9ae70;--text:#f5ede3;--muted:#c0b4a8}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 90% 0%,#433022 0%,var(--bg) 44%);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
+header{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:20px clamp(20px,5vw,70px);border-bottom:1px solid #58402e}
+.brand{font-size:1.25rem;font-weight:800;color:var(--gold);text-decoration:none}header a:last-child{color:var(--muted)}
+main{max-width:1100px;margin:auto;padding:44px 20px}h1{font-size:clamp(2rem,4vw,3.1rem);margin:.1em 0}h2{font-size:1.25rem}p{color:var(--muted)}.eyebrow{color:var(--gold);letter-spacing:.2em;text-transform:uppercase;font-size:.75rem}
+.notice{border:1px solid #9d764d;border-radius:14px;background:#211a16;padding:18px 22px;margin:28px 0}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:22px 0}
+button,select{font:inherit;background:#2e231c;color:var(--text);border:1px solid #806346;border-radius:8px;padding:10px 14px}
+button{cursor:pointer}button:hover{border-color:var(--gold)}button:disabled{opacity:.55;cursor:not-allowed}
+.primary{background:var(--gold);color:#17100c;font-weight:700}.danger{border-color:#ba6868}
+#count{color:var(--muted)}#reviews{display:grid;gap:14px}
+.review{border:1px solid #534032;background:var(--panel);border-radius:16px;padding:24px;overflow-wrap:anywhere}
+.review-head{display:flex;justify-content:space-between;align-items:start;gap:10px;flex-wrap:wrap}
+.meta{color:var(--muted);font-size:.88rem}.stars{color:#f2c77a;letter-spacing:2px}
+.review blockquote{margin:16px 0 22px;padding-left:16px;border-left:3px solid var(--gold);white-space:pre-wrap}
+.status{font-size:.8rem;border:1px solid #856b50;border-radius:40px;padding:3px 10px;text-transform:capitalize}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><a class="brand" href="/">Crazy Carla · Studio</a><a href="/">← Return to website</a></header>
+<main>
+<p class="eyebrow">Private moderation workspace</p>
+<h1>Review Board</h1>
+<p>Approve reviews before they appear publicly. Reviewers' email addresses are visible only to authorized administrators.</p>
+<div class="notice" id="notice" role="status">Administrator access is not activated yet. This page will remain unavailable until Cloudflare Access and the secure review API are configured.</div>
+<div id="workspace" hidden>
+<div class="actions"><label for="filter">Show</label><select id="filter"><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select><button id="refresh" type="button">Refresh</button><span id="count"></span></div>
+<div id="reviews" aria-live="polite"></div>
+</div>
+</main>
+<script>
+(()=>{
+'use strict';
+const API='https://carla-reviews-api.echocraft-aimusic.workers.dev';
+const $=s=>document.querySelector(s), notice=$('#notice'),workspace=$('#workspace');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function api(path,opts={}){
+ const r=await fetch(API+path,{...opts,credentials:'include',headers:{'Accept':'application/json',...(opts.body?{'Content-Type':'application/json'}:{}),...(opts.headers||{})},cache:'no-store'});
+ if(!r.ok){if(r.status===401||r.status===403)throw new Error('Administrator authentication required. Please sign in through the protected Cloudflare Access application.');throw new Error('Request failed ('+r.status+').');}
+ return r.json();
+}
+async function load(){
+ notice.textContent='Checking administrator access…';
+ try{
+  const data=await api('/api/admin/reviews?status='+encodeURIComponent($('#filter').value));
+  if(!Array.isArray(data.reviews))throw new Error('The admin API is not ready.');
+  workspace.hidden=false;notice.hidden=true;
+  $('#count').textContent=data.reviews.length+' review(s)';
+  $('#reviews').innerHTML=data.reviews.map(r=>'<article class="review" data-id="'+esc(r.id)+'"><div class="review-head"><div><strong>'+esc(r.reviewer_name)+'</strong><div class="meta">'+esc(r.reviewer_email)+' · '+esc(r.category||'General')+' · '+esc(r.created_at||'')+'</div></div><span class="status">'+esc(r.status)+'</span></div><div class="stars">'+ '★'.repeat(Math.max(0,Math.min(5,Number(r.rating)||0))) +'</div><blockquote>'+esc(r.review_text)+'</blockquote><div class="actions">'+(r.status!=='approved'?'<button class="primary" data-action="approved">Approve</button>':'')+(r.status!=='rejected'?'<button class="danger" data-action="rejected">Reject</button>':'')+(r.status==='approved'?'<button data-action="feature">'+(r.featured?'Unfeature':'Feature')+'</button>':'')+'</div></article>').join('')||'<p>No reviews in this category.</p>';
+ }catch(e){workspace.hidden=true;notice.hidden=false;notice.textContent=e.message||'Could not load reviews.';}
+}
+$('#refresh').addEventListener('click',load);$('#filter').addEventListener('change',load);
+$('#reviews').addEventListener('click',async e=>{
+ const btn=e.target.closest('button[data-action]');if(!btn)return;
+ const card=btn.closest('[data-id]');if(!card)return;
+ const action=btn.dataset.action;
+ if(!confirm('Confirm '+(action==='feature'?'change featured status':action)+'?'))return;
+ btn.disabled=true;
+ try{
+  const payload=action==='feature'?{featured:btn.textContent==='Feature'}:{status:action};
+  await api('/api/admin/reviews/'+encodeURIComponent(card.dataset.id),{method:'PATCH',body:JSON.stringify(payload)});
+  await load();
+ }catch(err){alert(err.message||'Action failed.');btn.disabled=false;}
+});
+load();
+})();
+</script>
+</body>
+</html>
