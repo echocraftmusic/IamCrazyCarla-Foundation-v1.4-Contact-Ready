@@ -1,8 +1,8 @@
 (() => {
 'use strict';
-const API='https://reviews-api.iamcrazycarla.com';
+const API=window.location.origin; // /api/admin/* routed to the existing Worker on this hostname.
 const login=document.querySelector('#login-panel'),dashboard=document.querySelector('#dashboard'),list=document.querySelector('#review-list'),signOut=document.querySelector('#sign-out'),loginStatus=document.querySelector('#login-status');
-let reviews=[],filter='pending';
+let reviews=[],filter='pending',checking=false;
 const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 async function request(path,method='GET',data){
  const opts={method,credentials:'include',cache:'no-store',headers:{'Accept':'application/json'}};
@@ -12,23 +12,27 @@ async function request(path,method='GET',data){
  const json=await result.json();return json;
 }
 async function load(){
+ if(checking)return;
+ checking=true;
  try{
   const data=await request('/api/admin/reviews');
   if(!Array.isArray(data.reviews))throw new Error('Invalid review response');
   reviews=data.reviews;login.hidden=true;dashboard.hidden=false;signOut.hidden=false;
   for(const s of ['pending','approved','archived'])document.querySelector('#'+s+'-count').textContent=reviews.filter(r=>r.status===s).length;
   render();
- }catch(e){dashboard.hidden=true;login.hidden=false;signOut.hidden=true;loginStatus.textContent='Please sign in through Cloudflare Access, then return here and click Refresh access. '+e.message;}
+ }catch(e){dashboard.hidden=true;login.hidden=false;signOut.hidden=true;loginStatus.textContent='Sign in with Cloudflare, then return to this tab. '+e.message;}finally{checking=false;}
 }
 function render(){
  const rows=filter==='all'?reviews:reviews.filter(r=>r.status===filter);
  if(!rows.length){list.innerHTML='<div class="empty">No reviews in this group.</div>';return;}
  list.innerHTML=rows.map(r=>`<article class="admin-review" data-id="${esc(r.id)}"><div class="admin-review-head"><div><h3>${esc(r.reviewer_name)}</h3><div class="stars">${'★'.repeat(Math.max(0,Math.min(5,r.rating)))}${'☆'.repeat(Math.max(0,5-r.rating))}</div></div><span class="badge ${esc(r.status)}">${esc(r.status)}</span></div><p class="private-email">Private email: ${esc(r.reviewer_email)} · ${esc(r.category)} · Submitted ${esc(r.created_at)}</p><p class="review-copy">${esc(r.review_text)}</p><div class="actions">${r.status!=='approved'?'<button class="approve" data-action="approve">Approve & publish</button>':'<button class="archive" data-action="archive">Unpublish</button>'}<button class="ghost" data-action="edit">Edit</button>${r.status!=='archived'?'<button class="archive" data-action="archive">Archive</button>':''}<button class="danger" data-action="delete">Delete</button></div></article>`).join('');
 }
-document.querySelector('#login-form').addEventListener('submit',e=>{e.preventDefault();window.open(API+'/api/admin/reviews','_blank','noopener,noreferrer');loginStatus.textContent='Finish your one-time PIN login in the new tab, then click Refresh access.';});
+document.querySelector('#login-form').addEventListener('submit',e=>{e.preventDefault();window.open(API+'/api/admin/reviews','_blank','noopener,noreferrer');loginStatus.textContent='Complete your one-time PIN login in the new tab, then return here. Your dashboard will load automatically.';});
+window.addEventListener('focus',()=>{if(!checking)load();});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!checking)load();});
 document.querySelector('#refresh').addEventListener('click',load);
 document.querySelector('#refresh-access').addEventListener('click',load);
-signOut.addEventListener('click',()=>{location.href=API+'/cdn-cgi/access/logout';});
+signOut.addEventListener('click',()=>{location.href='https://echocraft-aimusic.cloudflareaccess.com/cdn-cgi/access/logout';});
 document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');filter=b.dataset.filter;render();}));
 list.addEventListener('click',async e=>{
  const btn=e.target.closest('button[data-action]');if(!btn)return;
