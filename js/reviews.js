@@ -82,6 +82,8 @@
       body: JSON.stringify({
         _subject: 'New review awaiting approval — IamCrazyCarla.com',
         _template: 'table',
+        _url: 'https://iamcrazycarla.com/#reviews',
+        _captcha: 'false',
         reviewer_name: item.reviewer_name,
         category: item.category,
         rating: item.rating + ' / 5',
