@@ -13,7 +13,7 @@
   // 3) If D1 is unavailable, send a backup notification through FormSubmit.
   // 4) Quietly retry queued local copies on future visits / when connectivity returns.
   const REVIEW_QUEUE_KEY = 'carla_review_recovery_queue_v1';
-  const FALLBACK_ENDPOINT = 'https://formsubmit.co/ajax/aahfro10@gmail.com';
+  const FALLBACK_ENDPOINT = 'https://formsubmit.co/ajax/troy.saha@gmail.com';
 
   const escapeHTML = value => String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
   const displayName = value => {
