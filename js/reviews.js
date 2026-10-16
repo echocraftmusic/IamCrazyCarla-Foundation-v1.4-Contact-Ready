@@ -172,6 +172,15 @@
     }
   }
 
+  const consentCheckbox = form.querySelector('input[name="consent"]');
+  const submitButton = form.querySelector('button[type="submit"]');
+  let submitting = false;
+  function syncSubmitPermission() {
+    submitButton.disabled = submitting || !consentCheckbox.checked;
+  }
+  consentCheckbox.addEventListener('change', syncSubmitPermission);
+  syncSubmitPermission();
+
   form.addEventListener('submit', async event => {
     event.preventDefault();
     status.className = 'review-status';
@@ -194,7 +203,8 @@
     // Capture first, then transmit. This protects the text even if the primary database is unavailable.
     queueReview(item);
 
-    button.disabled = true;
+    submitting = true;
+    syncSubmitPermission();
     button.textContent = 'Submitting…';
 
     let safelyCaptured = false;
@@ -223,7 +233,8 @@
       status.textContent = 'Submission could not be confirmed. Please try again later; this browser retained a local recovery copy.';
     }
 
-    button.disabled = false;
+    submitting = false;
+    syncSubmitPermission();
     button.textContent = 'Submit Review';
 
     // If the primary database came back during the submission, sync any older queued items too.
