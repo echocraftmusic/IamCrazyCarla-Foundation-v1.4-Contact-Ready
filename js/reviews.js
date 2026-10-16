@@ -9,8 +9,8 @@
   const API = 'https://reviews-api.iamcrazycarla.com/api/reviews';
   // Review recovery layer:
   // 1) Persist locally before any network call.
-  // 2) Try Supabase first.
-  // 3) If Supabase is unavailable, send a durable backup copy through FormSubmit.
+  // 2) Try the Cloudflare D1 API first.
+  // 3) If D1 is unavailable, send a backup notification through FormSubmit.
   // 4) Quietly retry queued local copies on future visits / when connectivity returns.
   const REVIEW_QUEUE_KEY = 'carla_review_recovery_queue_v1';
   const FALLBACK_ENDPOINT = 'https://formsubmit.co/ajax/aahfro10@gmail.com';
@@ -92,7 +92,7 @@
         rating: `${item.rating} / 5`,
         review: item.review_text,
         consent: item.consent ? 'Yes' : 'No',
-        recovery_note: 'Supabase was unavailable when this review was submitted. This copy was preserved automatically for manual recovery if needed.'
+        recovery_note: 'The D1 API was unavailable when this review was submitted. This copy was preserved automatically for manual recovery if needed.'
       })
     });
 
@@ -112,7 +112,7 @@
         await saveToCloudflare(item);
         removeQueuedReview(item.id);
       } catch (primaryError) {
-        console.warn('Queued review is still waiting for Supabase.', primaryError);
+        console.warn('Queued review is still waiting for Cloudflare D1.', primaryError);
         if (!item.fallback_saved) {
           try {
             await saveFallbackCopy(item);
@@ -207,7 +207,7 @@
       console.warn('Primary review storage unavailable; using recovery path.', primaryError);
       try {
         await saveFallbackCopy(item);
-        safelyCaptured = true;
+        safelyCaptured = false; // Email backup does not confirm D1 review submission.
       } catch (fallbackError) {
         // Local queue does not guarantee server receipt: do not report successful submission.
         console.warn('Review remains locally queued. No server confirmed receipt.', fallbackError);
