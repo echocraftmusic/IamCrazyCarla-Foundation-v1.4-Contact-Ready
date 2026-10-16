@@ -73,6 +73,31 @@
     if(!data.success)throw new Error('Review was not accepted');
   }
 
+  // Best-effort notification only AFTER D1 confirms the new review was saved.
+  // Email failure must never roll back a review or prompt a second submission.
+  async function notifyNewReview(item) {
+    const response = await fetch(FALLBACK_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        _subject: 'New review awaiting approval — IamCrazyCarla.com',
+        _template: 'table',
+        reviewer_name: item.reviewer_name,
+        category: item.category,
+        rating: item.rating + ' / 5',
+        review: item.review_text,
+        submitted_at: item.created_at,
+        review_manager: 'https://iamcrazycarla.com/admin/reviews.html',
+        message: 'Saved successfully in Cloudflare D1. Review is pending approval.'
+      })
+    });
+    if (!response.ok) throw new Error('FormSubmit notification HTTP ' + response.status);
+    const result = await response.json().catch(() => ({}));
+    if (result.success === false || result.success === 'false') {
+      throw new Error(result.message || 'FormSubmit did not accept the notification');
+    }
+  }
+
   async function saveFallbackCopy(item) {
     if (item.fallback_saved) return true;
     const response = await fetch(FALLBACK_ENDPOINT, {
@@ -213,6 +238,12 @@
       await saveToCloudflare(item);
       removeQueuedReview(item.id);
       safelyCaptured = true;
+      // A failed email notification never changes the confirmed D1 save.
+      try {
+        await notifyNewReview(item);
+      } catch (emailError) {
+        console.warn('Review saved in D1, but email notification was not confirmed.', emailError);
+      }
     } catch (primaryError) {
       console.warn('Primary review storage unavailable; using recovery path.', primaryError);
       try {
