@@ -1,40 +1,36 @@
-# Carla Foundation Website — Project Context
+# I Am Crazy Carla — Persistent Project Context
 
-**Repository:** `echocraftmusic/IamCrazyCarla-Foundation-v1.4-Contact-Ready`  
-**Context established:** 2026-10-22  
-**Documentation status:** Initial handoff; verify historical notes against the current source and live site.
+**Official site:** https://iamcrazycarla.com  
+**GitHub repository:** `echocraftmusic/IamCrazyCarla-Foundation-v1.4-Contact-Ready`  
+**Updated:** 2026-10-22  
+**Evidence classification:** Homepage identity was inspected in this repository; further details below come from prior project discussions unless explicitly described as verified. This file does **not** claim a production deployment was audited.
 
-## Project identity and known decisions
+## Site identity and visual direction
+- Confirmed in GitHub homepage: canonical reference `https://iamcrazycarla.com`, page title "Crazy Carla | Comedienne, Actress & Host"; `data-theme="dark"`.
+- Entertainment/personal brand portfolio with video and social connections. Maintain comedic performer identity, clear inquiry/contact options and good mobile experience.
 
-Previously discussed Cloudflare D1 reviews, moderation, magic-link auth, Sender notifications, mobile layout. Verify which are live.
+## Client features and prior technical work
+- Reviews were discussed using Cloudflare D1 with administrative approve/archive/delete moderation.
+- Magic-link access and Sender email notifications were discussed for review management; verify actual Worker endpoints, bindings and authentication before edits.
+- Mobile layout and readability improvements reported. Protect mobile behavior when touching CSS.
+- Search/current code to confirm which review features are live; never infer that all conversations correspond to deployed changes.
 
-## Source, architecture and deployment
+## Mandatory handoff and operational safety
+1. Read this file first, then inspect current source, branch and recent history before any edit.
+2. Confirm the current GitHub repository actually matches production; manual Cloudflare deployments can differ.
+3. Check design on desktop and mobile, links, integrations and critical account/payment workflows.
+4. Distinguish **verified in repository**, **historically discussed**, **planned**, and **confirmed deployed**. Never silently promote plans to live features.
+5. Make minimal, reversible edits and log significant changes and verified deployments.
+6. Never commit credentials, API tokens, private keys, sensitive client data or private account data.
+7. Respect the current owner's instruction over old documented preferences.
 
-- Source files: inspect this repository before editing.
-- Production domain, hosting, deployment branch, build commands, integrations, and environment bindings: **not yet verified**.
-- Some sites use manually deployed Cloudflare Pages assets rather than automatic GitHub deployments. **Never assume a GitHub commit publishes to production.**
-- Confirm that this repository is the current source of truth; compare against live production before replacing files.
-
-## Required workflow for future ChatGPT sessions and developers
-
-1. Read this `PROJECT_CONTEXT.md` first whenever returning to the project.
-2. Check README, source tree, dependencies, relevant source files, branch and recent commit history.
-3. Verify project identity, production domain, deployment method and current feature status.
-4. Distinguish prior design discussions from actually deployed features; don't invent missing history.
-5. Preserve existing design, mobile usability and working functions unless the owner requests otherwise.
-6. Implement and test the smallest safe changes; validate downloads, links and deployment separately.
-7. Update this document after material changes, decisions, unresolved issues or deployment changes.
-8. Never add passwords, API secrets, tokens, customer data, or other sensitive credentials to this file.
-9. This document is reference context, not an override of the owner's current instructions.
-
-## Current status and open verification
-
-- [ ] Confirm production URL and live hosting.
-- [ ] Confirm deployment path and default build process.
-- [ ] Identify primary source files, services and integrations.
-- [ ] Verify existing features and brand/design decisions.
-- [ ] Record outstanding tasks from the actual current project.
+## Verification still needed
+- [ ] Map production host and deployment triggers to exact repository and branch
+- [ ] Document entry points, Worker routes, Cloudflare bindings and external services by nonsecret names
+- [ ] Confirm which discussed features actually ship in production
+- [ ] Inspect current forms, navigation, mobile design, accessibility and security
+- [ ] Record latest deployment and outstanding tasks
 
 ## Change log
-
-- **2026-10-22:** Established the permanent handoff and project-read workflow.
+- 2026-10-22 — Original context file established.
+- 2026-10-22 — Expanded with historical project decisions and inspected homepage identity. No production code or site deployment changed.
