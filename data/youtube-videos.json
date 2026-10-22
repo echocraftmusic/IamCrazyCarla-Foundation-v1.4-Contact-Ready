@@ -1,9 +1,25 @@
 {
   "channel_handle": "@10aahfro",
   "channel_id": "UC2wmlDZwxw4-RxtsyxSKHpA",
-  "last_checked_at": "2026-10-15T02:11:00.519278+00:00",
-  "updated_at": "2026-10-15T02:11:00.519278+00:00",
+  "last_checked_at": "2026-10-22T02:15:41.115957+00:00",
+  "updated_at": "2026-10-22T02:15:41.115957+00:00",
   "videos": [
+    {
+      "id": "fSm5-woO_z8",
+      "title": "Comic Book Cousins Trifus and Wuuunda!",
+      "published": "2026-10-20T01:17:01Z",
+      "description": "",
+      "url": "https://www.youtube.com/watch?v=fSm5-woO_z8",
+      "thumbnail": "https://i.ytimg.com/vi/fSm5-woO_z8/maxresdefault.jpg"
+    },
+    {
+      "id": "EXquGVx33PE",
+      "title": "THEATRE LOVERS IN NC",
+      "published": "2026-10-19T15:46:02Z",
+      "description": "",
+      "url": "https://www.youtube.com/watch?v=EXquGVx33PE",
+      "thumbnail": "https://i.ytimg.com/vi/EXquGVx33PE/maxresdefault.jpg"
+    },
     {
       "id": "KGuzAzwwqSs",
       "title": "Domestic Violence Can Only Be Hid SO Long...Neicee J is a SURVIVOR",
@@ -19,22 +35,6 @@
       "description": "",
       "url": "https://www.youtube.com/watch?v=pxnKY7ksjws",
       "thumbnail": "https://i.ytimg.com/vi/pxnKY7ksjws/maxresdefault.jpg"
-    },
-    {
-      "id": "0BMKu_wXdYg",
-      "title": "Comic Book Cousins Trifus and Wuuunda reach a milestone!!!",
-      "published": "2026-10-13T14:47:12Z",
-      "description": "",
-      "url": "https://www.youtube.com/watch?v=0BMKu_wXdYg",
-      "thumbnail": "https://i.ytimg.com/vi/0BMKu_wXdYg/maxresdefault.jpg"
-    },
-    {
-      "id": "NmJttDHaLpA",
-      "title": "Live Theatre Coming To Charlotte at The Queen City Creative Arts Festival 10/23-10/25",
-      "published": "2026-10-08T15:09:44Z",
-      "description": "",
-      "url": "https://www.youtube.com/watch?v=NmJttDHaLpA",
-      "thumbnail": "https://i.ytimg.com/vi/NmJttDHaLpA/maxresdefault.jpg"
     }
   ]
 }
